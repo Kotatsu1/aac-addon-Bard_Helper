@@ -2,7 +2,7 @@ local api = require("api")
 
 local bard_helper = {
   name = "Bard Helper",
-  version = "0.1",
+  version = "0.2",
   author = "Waifu",
   desc = "Shows songs time remaining"
 }
@@ -20,7 +20,9 @@ end
 local songsTimeRemains = {
   {
     title="Quickstep",
-    buffId=803,
+    skillId=10723,
+    buffId=804,
+    improvedBuffId=21444,
     y_coord=0,
     timeUsed=0,
     buffLostTime=0,
@@ -29,7 +31,9 @@ local songsTimeRemains = {
   },
   {
     title="Bloody Chantey",
-    buffId=850,
+    skillId=10727,
+    buffId=7663,
+    improvedBuffId=21446,
     y_coord=50,
     timeUsed=0,
     buffLostTime=0,
@@ -38,7 +42,9 @@ local songsTimeRemains = {
   },
   {
     title="Bulwark Ballad",
-    buffId=1000,
+    skillId=11396,
+    buffId=4389,
+    improvedBuffId=21447,
     y_coord=100,
     timeUsed=0,
     buffLostTime=0,
@@ -47,7 +53,9 @@ local songsTimeRemains = {
   },
   {
     title="Ode to Recovery",
-    buffId=834,
+    skillId=10724,
+    buffId=835,
+    improvedBuffId=21445,
     y_coord=150,
     timeUsed=0,
     buffLostTime=0,
@@ -85,7 +93,7 @@ local function UpdateSongIcon(song, timeRemains)
 end
 
 
-local function checkPlayerHasBuff(buffName)
+local function checkPlayerHasBuff(buffId, improvedBuffId)
     local buffCount = api.Unit:UnitBuffCount("player")
 
     if buffCount > 0 then
@@ -93,11 +101,9 @@ local function checkPlayerHasBuff(buffName)
             local buff = api.Unit:UnitBuff("player", i)
 
             if buff and buff.buff_id then
-                local buffTooltip = api.Ability:GetBuffTooltip(buff.buff_id)
-
-                if string.find(buffTooltip.name, buffName) then
-                  return true
-                end
+              if buff.buff_id == buffId or buff.buff_id == improvedBuffId then
+                return true
+              end
             end
         end
     end
@@ -119,7 +125,7 @@ local function getSongDuration()
 end
 
 
-local function updateSongTimeUsed(casterName, skillName)
+local function updateSongTimeUsed(casterName, skillId)
   local playerName = api.Unit:GetUnitNameById(api.Unit:GetUnitId("player"))
 
   if casterName ~= playerName then
@@ -130,8 +136,7 @@ local function updateSongTimeUsed(casterName, skillName)
 
   for i = 1, #songsTimeRemains do
     local song = songsTimeRemains[i]
-
-    if "[Perform] " .. song.title == skillName then
+    if song.skillId == skillId then
       song.timeUsed = currentTime
       song.buffLostTime = 0
       song.icon:Show(true)
@@ -153,7 +158,7 @@ local function OnUpdate()
       local timeRemains = song.timeUsed + getSongDuration() - currentTime
 
       if timeRemains > 0 then
-        if checkPlayerHasBuff(song.title) then
+        if checkPlayerHasBuff(song.buffId, song.improvedBuffId) then
           song.buffLostTime = 0
           UpdateSongIcon(song, timeRemains)
         else
@@ -177,7 +182,7 @@ end
 
 function Canvas:OnEvent(event, ...)
   if event == "COMBAT_MSG" then
-    updateSongTimeUsed(arg[3], arg[6])
+    updateSongTimeUsed(arg[3], arg[5])
   end
 
   if event == "CHAT_MESSAGE" then
